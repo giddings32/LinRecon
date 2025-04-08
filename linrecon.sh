@@ -438,6 +438,27 @@ Drives () {
     printf "${WHITEBG}                                                   ${RESET}\n"
     printf "${CYAN}===================================================${RESET}\n"
     
+    
+    printf "\n${CYAN}[+] debugfs Check ${RESET}\n"
+    df -lh | awk 'NR > 1 {print $1, $6}' | while read device mountpoint; do
+        [[ $device != /dev/* ]] && continue
+
+        if [[ -r "$device" ]]; then
+            output=$(echo "ls /" | debugfs "$device" 2>&1)
+    
+            if [[ "$output" == *"debugfs:"* && "$output" != *"Bad magic number"* && "$output" != *"can't open"* ]]; then
+                echo -e "    ${GREEN}[+] debugfs $device${NC}"
+                echo "        ($mountpoint)"
+            else
+                echo -e "    ${RED}[-] debugfs $device${NC}"
+                echo "        ($mountpoint)"
+            fi
+        else
+            echo -e "${RED}[-] $device${NC}"
+            echo "    ($mountpoint)"
+        fi
+    done
+    
     printf "\n${CYAN}[+] Mounted File Systems ${RESET}\n"
     mount
     
